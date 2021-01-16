@@ -6,7 +6,7 @@ import QuickLRU from 'quick-lru'
 import RepoForm from './RepoForm'
 import { isAbortException } from './util'
 
-const BUILDS_PER_REQUEST = 1000
+const BUILDS_PER_REQUEST = 100
 
 const cache = new AbortablePromiseCache({
   cache: new QuickLRU({ maxSize: 1000 }),
@@ -40,9 +40,7 @@ function useGithubActions(query) {
   const [counter, setCounter] = useState(0)
   const [error, setError] = useState()
   const [total, setTotal] = useState()
-  const [loading, setLoading] = useState(
-    query.repo ? 'Loading...' : 'Enter a repo'
-  )
+  const [loading, setLoading] = useState(query.repo ? 'Loading...' : '')
   const [builds, setBuilds] = useState([])
 
   useEffect(() => {
@@ -67,7 +65,6 @@ function useGithubActions(query) {
       } catch (e) {
         if (!isAbortException(e)) {
           console.error(e)
-          console.log(e.message)
           setError(e.message)
         }
       }
@@ -112,7 +109,7 @@ export default function App() {
       />
       {error ? (
         <p style={{ color: 'red' }}>{error}</p>
-      ) : loading ? (
+      ) : loading !== undefined ? (
         <p>{loading}</p>
       ) : (
         <div style={{ display: 'flex' }}>
