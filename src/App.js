@@ -11,8 +11,11 @@ const BUILDS_PER_REQUEST = 100
 const cache = new AbortablePromiseCache({
   cache: new QuickLRU({ maxSize: 1000 }),
   async fill(requestData, signal) {
-    const { url, headers } = requestData
-    const ret = await fetch(url, { headers, signal })
+    const { url } = requestData
+    const ret = await fetch(url, {
+      headers: { Accept: 'application/vnd.github.v3+json' },
+      signal,
+    })
     if (!ret.ok) {
       throw new Error(`HTTP ${ret.status} ${ret.statusText}`)
     }
@@ -24,16 +27,21 @@ const cache = new AbortablePromiseCache({
         branch: m.head_branch,
         github_link: m.id,
         duration: (new Date(m.updated_at) - new Date(m.created_at)) / 60000,
-        state: m.state,
+        state: m.conclusion,
+        updated_at: new Date(m.updated_at),
       })),
     }
   },
 })
 
 function getBuilds({ counter, repo }) {
-  return `https://api.github.com/repos/${repo}/actions/runs?page=${
-    counter / BUILDS_PER_REQUEST
-  }&per_page=${BUILDS_PER_REQUEST}`
+  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    return `test_data/${counter / BUILDS_PER_REQUEST}.json`
+  } else {
+    return `https://api.github.com/repos/${repo}/actions/runs?page=${
+      counter / BUILDS_PER_REQUEST
+    }&per_page=${BUILDS_PER_REQUEST}`
+  }
 }
 
 function useGithubActions(query) {
@@ -52,9 +60,14 @@ function useGithubActions(query) {
             const { total, result } = await cache.get(url, {
               url,
             })
-            setBuilds([...builds, ...result])
-            setTotal(total)
-            setLoading(`Loading builds...${builds.length}/${total}`)
+            if (result.length) {
+              setBuilds([...builds, ...result])
+              setTotal(total)
+              setLoading(`Loading builds...${builds.length}/${total}`)
+            } else {
+              setLoading(undefined)
+              setCounter(0)
+            }
           } else if (!builds.length) {
             setError('No builds loaded')
           } else {
@@ -74,7 +87,8 @@ function useGithubActions(query) {
   return [loading, error, builds]
 }
 
-function BuildDetails() {
+function BuildDetails(props) {
+  const { build, repo } = props
   return (
     <table>
       <thead>
@@ -83,8 +97,99 @@ function BuildDetails() {
           <th>Value</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        {Object.entries(build).map(([key, value]) => {
+          if (key.startsWith('yearmonth')) return null
+          if (key.startsWith('github')) {
+            const href = `https://github.com/${repo}/actions/runs/${value}`
+            return (
+              <tr>
+                <td>link</td>
+                <td>
+                  <a href={href}>{href}</a>
+                </td>
+              </tr>
+            )
+          }
+          return (
+            <tr key={key}>
+              <td>{`${key}`}</td>
+              <td>{`${value}`}</td>
+            </tr>
+          )
+        })}
+      </tbody>
     </table>
+  )
+}
+
+function Graph(props) {
+  const [clickedBuild, setClickedBuild] = useState()
+  const { builds, query } = props
+
+  return (
+    <div style={{ display: 'flex' }}>
+      <VegaLite
+        data={{ values: builds }}
+        patch={(spec) => {
+          spec.signals.push({
+            name: 'barClick',
+            value: 0,
+            on: [{ events: '*:mousedown', update: 'datum' }],
+          })
+          return spec
+        }}
+        signalListeners={{
+          barClick: (command, args) => {
+            setClickedBuild(args)
+          },
+        }}
+        spec={{
+          $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
+          width: 1000,
+          height: 400,
+          mark: { type: 'point', tooltip: { content: 'data' } },
+          data: { name: 'values' },
+          selection: {
+            grid: {
+              type: 'interval',
+              bind: 'scales',
+            },
+          },
+          encoding: {
+            y: {
+              field: 'duration',
+              type: 'quantitative',
+              axis: {
+                title: 'Duration (minutes)',
+              },
+            },
+            x: {
+              field: 'updated_at',
+              timeUnit: 'yearmonthdatehoursminutes',
+              type: 'temporal',
+              scale: {
+                nice: 'week', // add some padding/niceness to domain
+              },
+              axis: {
+                title: 'Date',
+              },
+            },
+            color: {
+              field: 'state',
+              type: 'nominal',
+              scale: {
+                domain: ['success', 'skipped', 'failure', 'canceled'],
+                range: ['#39aa56', '#ff7f0e', '#db4545', '#9d9d9d'],
+              },
+            },
+          },
+        }}
+      />
+      {clickedBuild ? (
+        <BuildDetails repo={query.repo} build={clickedBuild} />
+      ) : null}
+    </div>
   )
 }
 
@@ -94,7 +199,6 @@ export default function App() {
   })
   const [, forceRerender] = useState(0)
   const [loading, error, builds] = useGithubActions(query)
-  const [clickedBuild, setClickedBuild] = useState(undefined)
 
   return (
     <>
@@ -112,72 +216,7 @@ export default function App() {
       ) : loading !== undefined ? (
         <p>{loading}</p>
       ) : (
-        <div style={{ display: 'flex' }}>
-          <VegaLite
-            data={{ values: builds }}
-            patch={(spec) => {
-              spec.signals.push({
-                name: 'barClick',
-                value: 0,
-                on: [{ events: '*:mousedown', update: 'datum' }],
-              })
-              return spec
-            }}
-            signalListeners={{
-              barClick: (command, args) => {
-                setClickedBuild(args)
-              },
-            }}
-            spec={{
-              $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
-              width: 1000,
-              height: 400,
-              mark: { type: 'point', tooltip: { content: 'data' } },
-              data: { name: 'values' },
-              selection: {
-                grid: {
-                  type: 'interval',
-                  bind: 'scales',
-                },
-              },
-              encoding: {
-                y: {
-                  field: 'duration',
-                  type: 'quantitative',
-                  axis: {
-                    title: 'Duration (minutes)',
-                  },
-                },
-                x: {
-                  field: 'finished_at',
-                  timeUnit: 'yearmonthdatehoursminutes',
-                  type: 'temporal',
-                  scale: {
-                    nice: 'week', // add some padding/niceness to domain
-                  },
-                  axis: {
-                    title: 'Date',
-                  },
-                },
-                color: {
-                  field: 'state',
-                  type: 'nominal',
-                  scale: {
-                    domain: ['passed', 'failed', 'errored', 'canceled'],
-                    range: ['#39aa56', '#ff7f0e', '#db4545', '#9d9d9d'],
-                  },
-                },
-              },
-            }}
-          />
-          {clickedBuild ? (
-            <BuildDetails
-              repo={query.repo}
-              com={query.com ? 'com' : 'org'}
-              build={clickedBuild}
-            />
-          ) : null}
-        </div>
+        <Graph builds={builds} query={query} />
       )}
       <a href="https://github.com/cmdcolin/githubgraphjs/">source code</a>
     </>
