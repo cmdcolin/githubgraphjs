@@ -4,7 +4,7 @@ import { VegaLite } from 'react-vega'
 import AbortablePromiseCache from 'abortable-promise-cache'
 import QuickLRU from 'quick-lru'
 import RepoForm from './RepoForm'
-import { isAbortException } from './util'
+import { filterOutliers, isAbortException } from './util'
 
 const BUILDS_PER_REQUEST = 100
 
@@ -22,25 +22,28 @@ const cache = new AbortablePromiseCache({
     const json = await ret.json()
     return {
       total: json.total_count,
-      result: json.workflow_runs.map((m) => ({
-        message: (m.head_commit || {}).message.slice(0, 20),
-        branch: m.head_branch,
-        github_link: m.id,
-        duration: (new Date(m.updated_at) - new Date(m.created_at)) / 60000,
-        state: m.conclusion,
-        updated_at: new Date(m.updated_at),
-      })),
+      result: filterOutliers(
+        json.workflow_runs.map((m) => ({
+          message: (m.head_commit || {}).message.slice(0, 50),
+          branch: m.head_branch,
+          name: m.name,
+          github_link: m.id,
+          duration: (new Date(m.updated_at) - new Date(m.created_at)) / 60000,
+          state: m.conclusion,
+          updated_at: new Date(m.updated_at),
+        }))
+      ),
     }
   },
 })
 
 function getBuilds({ counter, repo }) {
   if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return `test_data/${counter / BUILDS_PER_REQUEST}.json`
+    return `test_data/${Math.floor(counter / BUILDS_PER_REQUEST)}.json`
   } else {
-    return `https://api.github.com/repos/${repo}/actions/runs?page=${
+    return `https://api.github.com/repos/${repo}/actions/runs?page=${Math.floor(
       counter / BUILDS_PER_REQUEST
-    }&per_page=${BUILDS_PER_REQUEST}`
+    )}&per_page=${BUILDS_PER_REQUEST}`
   }
 }
 
