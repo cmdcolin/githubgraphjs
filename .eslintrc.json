@@ -1,19 +1,10 @@
 {
-  "plugins": [
-    "babel",
-    "prettier",
-    "react",
-    "react-hooks"
-  ],
-  "parser": "babel-eslint",
-  "extends": [
-    "prettier",
-    "eslint:recommended",
-    "plugin:react/recommended"
-  ],
+  "plugins": ["prettier", "react", "react-hooks"],
+  "extends": ["prettier", "eslint:recommended", "plugin:react/recommended"],
   "rules": {
     "prettier/prettier": "error",
     "react-hooks/rules-of-hooks": "error",
+    "react/prop-types": 0,
     "react-hooks/exhaustive-deps": "warn",
     "no-extra-semi": 0
   },
