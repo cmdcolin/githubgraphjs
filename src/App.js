@@ -11,9 +11,12 @@ const BUILDS_PER_REQUEST = 100
 const cache = new AbortablePromiseCache({
   cache: new QuickLRU({ maxSize: 1000 }),
   async fill(requestData, signal) {
-    const { url } = requestData
+    const { url, token } = requestData
     const ret = await fetch(url, {
-      headers: { Accept: 'application/vnd.github.v3+json' },
+      headers: {
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: token ? `token ${token}` : undefined,
+      },
       signal,
     })
     if (!ret.ok) {
@@ -38,13 +41,9 @@ const cache = new AbortablePromiseCache({
 })
 
 function getBuilds({ counter, repo }) {
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-    return `test_data/${Math.floor(counter / BUILDS_PER_REQUEST)}.json`
-  } else {
-    return `https://api.github.com/repos/${repo}/actions/runs?page=${Math.floor(
-      counter / BUILDS_PER_REQUEST
-    )}&per_page=${BUILDS_PER_REQUEST}`
-  }
+  return `https://api.github.com/repos/${repo}/actions/runs?page=${Math.floor(
+    counter / BUILDS_PER_REQUEST
+  )}&per_page=${BUILDS_PER_REQUEST}`
 }
 
 function useGithubActions(query) {
@@ -60,8 +59,10 @@ function useGithubActions(query) {
         if (query && query.repo) {
           const url = getBuilds({ ...query, counter: builds.length })
           if (url && total ? total >= builds.length : true) {
-            const { total, result } = await cache.get(url, {
+            const token = query.token
+            const { total, result } = await cache.get(url + token, {
               url,
+              token,
             })
             if (result.length) {
               setBuilds([...builds, ...result])
@@ -148,7 +149,7 @@ function Graph(props) {
           },
         }}
         spec={{
-          $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
+          $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
           width: 1000,
           height: 400,
           mark: { type: 'point', tooltip: { content: 'data' } },
@@ -197,29 +198,36 @@ function Graph(props) {
 }
 
 export default function App() {
-  const [query, setQuery] = useQueryParams({
+  const [params, setParams] = useQueryParams({
     repo: StringParam,
   })
-  const [, forceRerender] = useState(0)
-  const [loading, error, builds] = useGithubActions(query)
+  const [state, setState] = useState({})
+  const { repo } = state
+
+  useEffect(() => {
+    setParams({ repo })
+  }, [repo, setParams])
+
+  const [loading, error, builds] = useGithubActions(state)
 
   return (
     <>
       <h1>githubgraph-js - GitHub actions graphs</h1>
       <p>Enter a repo name</p>
+
       <RepoForm
-        initialValues={query}
+        initialValues={params}
         onSubmit={(res) => {
-          setQuery(res)
-          forceRerender((c) => c + 1)
+          setState({ ...res })
         }}
       />
+
       {error ? (
         <p style={{ color: 'red' }}>{error}</p>
       ) : loading !== undefined ? (
         <p>{loading}</p>
       ) : (
-        <Graph builds={builds} query={query} />
+        <Graph builds={builds} query={state} />
       )}
       <a href="https://github.com/cmdcolin/githubgraphjs/">source code</a>
     </>
