@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 // stackoverflow
 export function filterOutliers(someArray = []) {
   if (!someArray.length) return []
@@ -14,7 +16,7 @@ export function filterOutliers(someArray = []) {
   const minValue = q1 - iqr * 3
 
   return values.filter(
-    (x) => x.duration < maxValue && x.duration > minValue && !!x.updated_at
+    x => x.duration < maxValue && x.duration > minValue && !!x.updated_at,
   )
 }
 export function isAbortException(exception) {
@@ -28,4 +30,12 @@ export function isAbortException(exception) {
     // stringified standard-ish exception
     exception.message === 'Error: aborted'
   )
+}
+
+const BUILDS_PER_REQUEST = 100
+
+export function getBuilds({ counter, repo }) {
+  return `https://api.github.com/repos/${repo}/actions/runs?page=${Math.floor(
+    counter / BUILDS_PER_REQUEST,
+  )}&per_page=${BUILDS_PER_REQUEST}`
 }

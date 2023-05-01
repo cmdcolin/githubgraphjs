@@ -6,8 +6,8 @@ https://cmdcolin.github.io/githubgraphjs
 
 ## Install
 
-    yarn
+    yarn dev
 
 ## Build
 
-    yarn start
+    yarn build
