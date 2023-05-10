@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import AbortablePromiseCache from 'abortable-promise-cache'
+import AbortablePromiseCache from '@gmod/abortable-promise-cache'
 import QuickLRU from 'quick-lru'
 import { filterOutliers, getBuilds, isAbortException } from './util'
 
