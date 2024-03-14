@@ -2,17 +2,21 @@ import { useState } from 'react'
 import { VegaLite } from 'react-vega'
 import BuildDetails from './BuildDetails'
 
-export default function Graph(props: { builds: any; query: any }) {
+export default function Graph({
+  builds,
+  query,
+}: {
+  builds: any
+  query: { repo: string }
+}) {
   const [clickedBuild, setClickedBuild] = useState()
-  const { builds, query } = props
-  console.log({ builds })
 
   return (
     <div style={{ display: 'flex' }}>
       <VegaLite
         data={{ values: builds }}
         patch={spec => {
-          spec.signals.push({
+          spec.signals?.push({
             name: 'barClick',
             value: 0,
             on: [{ events: '*:mousedown', update: 'datum' }],
@@ -20,7 +24,8 @@ export default function Graph(props: { builds: any; query: any }) {
           return spec
         }}
         signalListeners={{
-          barClick: (command, args) => {
+          barClick: (_command, args) => {
+            // @ts-expect-error
             setClickedBuild(args)
           },
         }}
@@ -30,6 +35,7 @@ export default function Graph(props: { builds: any; query: any }) {
           height: 400,
           mark: { type: 'point', tooltip: { content: 'data' } },
           data: { name: 'values' },
+          // @ts-expect-error
           selection: {
             grid: {
               type: 'interval',

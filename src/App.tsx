@@ -8,9 +8,7 @@ export default function App() {
     repo: '',
     token: '',
   })
-
   const [loading, error, builds] = useGithubActions(state)
-  console.log({ loading, error, builds })
 
   return (
     <>
@@ -22,11 +20,11 @@ export default function App() {
         <p style={{ color: 'red' }}>{`${error}`}</p>
       ) : loading ? (
         <p>{loading}</p>
-      ) : (
+      ) : builds.length ? (
         <div style={{ marginTop: 50 }}>
           <Graph builds={builds} query={state} />
         </div>
-      )}
+      ) : null}
 
       {builds ? (
         <textarea

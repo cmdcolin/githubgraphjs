@@ -1,6 +1,10 @@
-//@ts-nocheck
-export default function BuildDetails(props) {
-  const { build, repo } = props
+export default function BuildDetails({
+  build,
+  repo,
+}: {
+  build: Record<string, unknown>
+  repo: string
+}) {
   return (
     <table>
       <thead>
@@ -11,24 +15,26 @@ export default function BuildDetails(props) {
       </thead>
       <tbody>
         {Object.entries(build).map(([key, value]) => {
-          if (key.startsWith('yearmonth')) return null
-          if (key.startsWith('github')) {
+          if (key.startsWith('yearmonth')) {
+            return null
+          } else if (key.startsWith('github')) {
             const href = `https://github.com/${repo}/actions/runs/${value}`
             return (
-              <tr>
+              <tr key={key}>
                 <td>link</td>
                 <td>
                   <a href={href}>{href}</a>
                 </td>
               </tr>
             )
+          } else {
+            return (
+              <tr key={key}>
+                <td>{`${key}`}</td>
+                <td>{`${value}`}</td>
+              </tr>
+            )
           }
-          return (
-            <tr key={key}>
-              <td>{`${key}`}</td>
-              <td>{`${value}`}</td>
-            </tr>
-          )
         })}
       </tbody>
     </table>
