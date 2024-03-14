@@ -2,13 +2,7 @@ import { useState } from 'react'
 import { VegaLite } from 'react-vega'
 import BuildDetails from './BuildDetails'
 
-export default function Graph({
-  builds,
-  query,
-}: {
-  builds: any
-  query: { repo: string }
-}) {
+export default function Graph({ builds, repo }: { builds: any; repo: string }) {
   const [clickedBuild, setClickedBuild] = useState()
 
   return (
@@ -72,9 +66,7 @@ export default function Graph({
           },
         }}
       />
-      {clickedBuild ? (
-        <BuildDetails repo={query.repo} build={clickedBuild} />
-      ) : null}
+      {clickedBuild ? <BuildDetails repo={repo} build={clickedBuild} /> : null}
     </div>
   )
 }

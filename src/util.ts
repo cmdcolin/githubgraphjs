@@ -1,25 +1,18 @@
 // stackoverflow
 export function filterOutliers(
-  someArray: { duration: number; updated_at: unknown }[] = [],
+  arr: { duration: number; updated_at: unknown }[] = [],
 ) {
-  if (!someArray.length) {
+  if (!arr.length) {
     return []
   }
-  const values = someArray.concat()
-  values.sort((a, b) => a.duration - b.duration)
+  const vals = arr.map(s => s.duration)
+  let sum = 0
+  for (const val of vals) {
+    sum += val
+  }
+  const avg = sum / vals.length
 
-  const q1 = values[Math.floor(values.length / 4)].duration
-  const q3 =
-    values[Math.min(Math.ceil(values.length * (3 / 4)), values.length - 1)]
-      .duration
-  const iqr = q3 - q1
-
-  const maxValue = q3 + iqr * 3
-  const minValue = q1 - iqr * 3
-
-  return values.filter(
-    x => x.duration < maxValue && x.duration > minValue && !!x.updated_at,
-  )
+  return arr.filter(x => x.duration < avg * 2)
 }
 export function isAbortException(exception: unknown) {
   return (

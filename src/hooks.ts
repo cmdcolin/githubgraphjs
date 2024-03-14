@@ -8,7 +8,7 @@ interface Result {
   branch: string
   duration: string
   github_link: string
-  message: string
+  message?: string
   updated_at2: number
   name: string
   state: string
@@ -53,8 +53,11 @@ const cache = new AbortablePromiseCache<
           branch: m.head_branch,
           name: m.name,
           github_link: m.id,
-          // @ts-expect-error
-          duration: (new Date(m.updated_at) - new Date(m.created_at)) / 60000,
+          duration: Math.min(
+            // @ts-expect-error
+            Math.abs(new Date(m.updated_at) - new Date(m.created_at)) / 60000,
+            100,
+          ),
           state: m.conclusion,
           updated_at: new Date(m.updated_at),
           updated_at2: m.updated_at,
@@ -75,6 +78,7 @@ export function useGithubActions(query: { repo: string; token: string }) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       try {
+        setError(undefined)
         if (query?.repo) {
           const url = getBuilds({ ...query, counter: builds.length })
           if (url && total ? total >= builds.length : true) {
