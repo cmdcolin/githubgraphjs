@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import Graph from './Graph'
 import { useGithubActions } from './hooks'
 
@@ -20,14 +21,14 @@ export default function App() {
       >
         <div>
           <label style={{ marginRight: 10 }}>Repo name:</label>
-          <input value={tmp1} onChange={event => setTmp1(event.target.value)} />
+          <input value={tmp1} onChange={event => { setTmp1(event.target.value); }} />
         </div>
         <div>
           <label style={{ marginRight: 10 }}>
             Access token (optional, let&apos;s you make more API requests
             without limitations):
           </label>
-          <input value={tmp2} onChange={event => setTmp2(event.target.value)} />
+          <input value={tmp2} onChange={event => { setTmp2(event.target.value); }} />
         </div>
 
         <button type="submit">Submit</button>
@@ -36,7 +37,7 @@ export default function App() {
         <p style={{ color: 'red' }}>{`${error}`}</p>
       ) : loading ? (
         <p>{loading}</p>
-      ) : builds.length ? (
+      ) : builds.length > 0 ? (
         <div style={{ marginTop: 50 }}>
           <Graph builds={builds} repo={repo} />
         </div>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
+
 import { VegaLite } from 'react-vega'
+
 import BuildDetails from './BuildDetails'
 
 export default function Graph({ builds, repo }: { builds: any; repo: string }) {

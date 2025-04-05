@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
 import AbortablePromiseCache from '@gmod/abortable-promise-cache'
 import QuickLRU from 'quick-lru'
+
 import { filterOutliers, getBuilds, isAbortException } from './util'
 
 interface Result {
@@ -49,13 +51,13 @@ const cache = new AbortablePromiseCache<
       total: json.total_count,
       result: filterOutliers(
         json.workflow_runs.map(m => ({
-          message: m.head_commit?.message?.slice(0, 50),
+          message: m.head_commit?.message.slice(0, 50),
           branch: m.head_branch,
           name: m.name,
           github_link: m.id,
           duration: Math.min(
             // @ts-expect-error
-            Math.abs(new Date(m.updated_at) - new Date(m.created_at)) / 60000,
+            Math.abs(new Date(m.updated_at) - new Date(m.created_at)) / 60_000,
             100,
           ),
           state: m.conclusion,
@@ -79,7 +81,7 @@ export function useGithubActions(query: { repo: string; token: string }) {
     ;(async () => {
       try {
         setError(undefined)
-        if (query?.repo) {
+        if (query.repo) {
           const url = getBuilds({ ...query, counter: builds.length })
           if (url && total ? total >= builds.length : true) {
             const token = query.token
@@ -87,7 +89,7 @@ export function useGithubActions(query: { repo: string; token: string }) {
               url,
               token,
             })
-            if (result.length) {
+            if (result.length > 0) {
               setBuilds([...builds, ...result])
               setTotal(total)
               setLoading(`Loading builds...${builds.length}/${total}`)
@@ -95,17 +97,17 @@ export function useGithubActions(query: { repo: string; token: string }) {
               setLoading('')
               setCounter(0)
             }
-          } else if (!builds.length) {
+          } else if (builds.length === 0) {
             setError('No builds loaded')
           } else {
             setLoading('')
             setCounter(0)
           }
         }
-      } catch (e) {
-        if (!isAbortException(e)) {
-          console.error(e)
-          setError(e)
+      } catch (error_) {
+        if (!isAbortException(error_)) {
+          console.error(error_)
+          setError(error_)
         }
       }
     })()

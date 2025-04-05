@@ -2,7 +2,7 @@
 export function filterOutliers(
   arr: { duration: number; updated_at: unknown }[] = [],
 ) {
-  if (!arr.length) {
+  if (arr.length === 0) {
     return []
   }
   const vals = arr.map(s => s.duration)

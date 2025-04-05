@@ -30,7 +30,7 @@ export default function BuildDetails({
           } else {
             return (
               <tr key={key}>
-                <td>{`${key}`}</td>
+                <td>{key}</td>
                 <td>{`${value}`}</td>
               </tr>
             )

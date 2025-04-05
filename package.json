@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
     "predeploy": "npm run build",
@@ -14,26 +14,29 @@
   },
   "dependencies": {
     "@gmod/abortable-promise-cache": "^2.0.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unicorn": "^58.0.0",
     "gh-pages": "^6.1.1",
     "quick-lru": "^7.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "react-vega": "^7.6.0",
-    "vega": "^5.28.0",
-    "vega-lite": "^5.17.0"
+    "typescript-eslint": "^8.29.0",
+    "vega": "^6.1.2",
+    "vega-lite": "^6.1.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.65",
-    "@types/react-dom": "^18.2.22",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.1",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "eslint": "^8.57.0",
+    "eslint": "^9.24.0",
     "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "prettier": "^3.2.5",
     "typescript": "^5.4.2",
-    "vite": "^5.1.6"
+    "vite": "^6.2.5"
   }
 }
